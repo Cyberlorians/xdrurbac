@@ -140,4 +140,43 @@ For each role below:
 **Assign group:** `MDI-SecAnalystT3-Manage`
 
 | Category | Selection | Permissions |
-|----------|-----------|------------
+|----------|-----------|-------------|
+| Security operations | Select **All permissions** | All read and manage |
+| Security posture | Select **All permissions** | All read and manage |
+| Authorization and settings | ⚠️ Select **Custom permissions** | See below |
+
+**Authorization and settings – Custom permissions:**
+
+1. **Security settings** → Select **Custom permissions**:
+   - ☑️ Detect tuning (manage)
+   - ☑️ Core security settings (read)
+   - ☑️ Core security settings (manage)
+
+2. **System settings**:
+   - ☑️ Read and manage permissions
+
+---
+
+## Step 5 – Activate Unified RBAC
+
+Go to **Settings** → **Microsoft Defender XDR** → **Permissions** → **Roles**
+
+Enable Unified RBAC for Microsoft Defender for Identity workload.
+
+---
+
+## Step 6 – User Activation
+
+When users need MDI access:
+
+1. Go to **myaccess.microsoft.com** → **Groups**
+2. Find the assigned group membership
+3. Click **Activate**
+4. Complete MFA and approval (if configured)
+5. Permissions apply until session expires
+
+---
+
+## Continuous Review
+
+Regularly review and adjust roles, groups, and permissions to ensure they meet evolving security needs and organizational changes.
