@@ -78,19 +78,19 @@ For each group:
 
 ## Step 4 – Assign Permissions in Defender XDR
 
-Go to **Defender XDR Portal** → **System** → **Permissions** → **Microsoft Defender XDR** → **Roles**
+Go to **Defender XDR Portal** → **Settings** → **Microsoft Defender XDR** → **Permissions** → **Roles**
 
 For each role below:
 1. Click **Create custom role**
 2. Name the role to match the group
-3. Assign the corresponding Entra group
-4. Configure permissions exactly as specified
+3. Configure permissions exactly as specified
+4. **Create an assignment** (see assignment details for each role)
 
 ---
 
 ### MDI-SecAdmin-Full
 
-**Assign group:** `MDI-SecAdmin-Full`
+#### Permissions
 
 | Category | Selection | Permissions |
 |----------|-----------|-------------|
@@ -98,11 +98,20 @@ For each role below:
 | Security posture | Select **All permissions** | All read and manage |
 | Authorization and settings | Select **All permissions** | All read and manage |
 
+#### Assignment
+
+| Field | Value |
+|-------|-------|
+| Assignment name | `MDI-SecAdmin-Full` |
+| Employees | Add group: `MDI-SecAdmin-Full` |
+| Data sources | Select: **Microsoft Defender for Identity** |
+| Identity scopes | Select: **All available user groups** |
+
 ---
 
 ### MDI-SecAnalystT1-ReadOnly
 
-**Assign group:** `MDI-SecAnalystT1-ReadOnly`
+#### Permissions
 
 | Category | Selection | Permissions |
 |----------|-----------|-------------|
@@ -110,11 +119,20 @@ For each role below:
 | Security posture | Select **All permissions** | All read only |
 | Authorization and settings | Select **None** | No access |
 
+#### Assignment
+
+| Field | Value |
+|-------|-------|
+| Assignment name | `MDI-SecAnalystT1-ReadOnly` |
+| Employees | Add group: `MDI-SecAnalystT1-ReadOnly` |
+| Data sources | Select: **Microsoft Defender for Identity** |
+| Identity scopes | Select: **All available user groups** |
+
 ---
 
 ### MDI-SecAnalystT2-Limited
 
-**Assign group:** `MDI-SecAnalystT2-Limited`
+#### Permissions
 
 | Category | Selection | Permissions |
 |----------|-----------|-------------|
@@ -133,11 +151,20 @@ For each role below:
 2. Select **Custom permissions**
 3. ☑️ Detect tuning (manage)
 
+#### Assignment
+
+| Field | Value |
+|-------|-------|
+| Assignment name | `MDI-SecAnalystT2-Limited` |
+| Employees | Add group: `MDI-SecAnalystT2-Limited` |
+| Data sources | Select: **Microsoft Defender for Identity** |
+| Identity scopes | Select: **All available user groups** |
+
 ---
 
 ### MDI-SecAnalystT3-Manage
 
-**Assign group:** `MDI-SecAnalystT3-Manage`
+#### Permissions
 
 | Category | Selection | Permissions |
 |----------|-----------|-------------|
@@ -154,6 +181,15 @@ For each role below:
 
 2. **System settings**:
    - ☑️ Read and manage permissions
+
+#### Assignment
+
+| Field | Value |
+|-------|-------|
+| Assignment name | `MDI-SecAnalystT3-Manage` |
+| Employees | Add group: `MDI-SecAnalystT3-Manage` |
+| Data sources | Select: **Microsoft Defender for Identity** |
+| Identity scopes | Select: **All available user groups** |
 
 ---
 
