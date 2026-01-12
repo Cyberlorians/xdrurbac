@@ -80,62 +80,64 @@ For each group:
 
 Go to **Defender XDR Portal** → **Settings** → **Microsoft Defender XDR** → **Permissions** → **Roles**
 
-Create custom roles and assign each Entra group to matching permissions:
+For each role below:
+1. Click **Create custom role**
+2. Name the role to match the group
+3. Assign the corresponding Entra group
+4. Configure permissions exactly as specified
+
+---
 
 ### MDI-SecAdmin-Full
 
-| Category | Permissions |
-|----------|-------------|
-| Security operations | All read and manage |
-| Security posture | All read and manage |
-| Authorization and settings | All read and manage |
+**Assign group:** `MDI-SecAdmin-Full`
+
+| Category | Selection | Permissions |
+|----------|-----------|-------------|
+| Security operations | Select **All permissions** | All read and manage |
+| Security posture | Select **All permissions** | All read and manage |
+| Authorization and settings | Select **All permissions** | All read and manage |
+
+---
 
 ### MDI-SecAnalystT1-ReadOnly
 
-| Category | Permissions |
-|----------|-------------|
-| Security operations | All read only |
-| Security posture | All read only |
-| Authorization and settings | None |
+**Assign group:** `MDI-SecAnalystT1-ReadOnly`
+
+| Category | Selection | Permissions |
+|----------|-----------|-------------|
+| Security operations | Select **All permissions** | All read only |
+| Security posture | Select **All permissions** | All read only |
+| Authorization and settings | Select **None** | No access |
+
+---
 
 ### MDI-SecAnalystT2-Limited
 
-| Category | Permissions |
-|----------|-------------|
-| Security operations | Alerts (manage), Response (manage), Basic live response (manage), File collection (manage) |
-| Security posture | All read and manage |
-| Authorization and settings | Security settings → Detect tuning (manage) |
+**Assign group:** `MDI-SecAnalystT2-Limited`
+
+| Category | Selection | Permissions |
+|----------|-----------|-------------|
+| Security operations | ⚠️ Select **Custom permissions** | See below |
+| Security posture | Select **All permissions** | All read and manage |
+| Authorization and settings | ⚠️ Select **Custom permissions** | See below |
+
+**Security operations – Custom permissions:**
+- ☑️ Alerts (manage)
+- ☑️ Response (manage)
+- ☑️ Basic live response (manage)
+- ☑️ File collection (manage)
+
+**Authorization and settings – Custom permissions:**
+1. Select **Security settings**
+2. Select **Custom permissions**
+3. ☑️ Detect tuning (manage)
+
+---
 
 ### MDI-SecAnalystT3-Manage
 
-| Category | Permissions |
-|----------|-------------|
-| Security operations | All read and manage |
-| Security posture | All read and manage |
-| Authorization and settings | Security settings → Detect tuning (manage), Core security settings (read and manage); System settings (read and manage) |
+**Assign group:** `MDI-SecAnalystT3-Manage`
 
----
-
-## Step 5 – Activate Unified RBAC
-
-Go to **Settings** → **Microsoft Defender XDR** → **Permissions** → **Roles**
-
-Enable Unified RBAC for Microsoft Defender for Identity workload.
-
----
-
-## Step 6 – User Activation
-
-When users need MDI access:
-
-1. Go to **myaccess.microsoft.com** → **Groups**
-2. Find the assigned group membership
-3. Click **Activate**
-4. Complete MFA and approval (if configured)
-5. Permissions apply until session expires
-
----
-
-## Continuous Review
-
-Regularly review and adjust roles, groups, and permissions to ensure they meet evolving security needs and organizational changes.
+| Category | Selection | Permissions |
+|----------|-----------|------------
