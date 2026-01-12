@@ -78,7 +78,7 @@ For each group:
 
 ## Step 4 – Assign Permissions in Defender XDR
 
-Go to **Defender XDR Portal** → **Settings** → **Microsoft Defender XDR** → **Permissions** → **Roles**
+Go to **Defender XDR Portal** → **System** → **Permissions** → **Microsoft Defender XDR** → **Roles**
 
 For each role below:
 1. Click **Create custom role**
