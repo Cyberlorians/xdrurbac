@@ -1,100 +1,141 @@
-# Unified RBAC for MDI Build Guide – Step-by-Step
+# Unified RBAC for MDI – Deployment Guide
 
-## Purpose
+## Overview
 
-To set up Microsoft Defender for Identity (MDI) access using Microsoft Entra role-assignable groups with Privileged Identity Management (PIM), ensuring all privileged roles are eligible and require elevation before use.
+This guide configures Microsoft Defender for Identity (MDI) access using Microsoft Entra role-assignable groups integrated with Privileged Identity Management (PIM) and Defender XDR Unified RBAC.
 
-## Section 1 – Key Concepts
+> **Important:** Some highly privileged Entra global roles, such as Global Administrator, will continue to have admin privileges. Defender XDR respects these roles by maintaining their extensive access rights. This ensures critical administrative capabilities (such as for emergency access/break-glass accounts) remain uninterrupted.
 
-### 1. Role-Assignable Group
+---
 
-* A special Microsoft Entra group that can be assigned directory roles (e.g., Security Administrator).
-* These groups have `isAssignableToRole` set to true.
-* This property cannot be changed later.
+## Prerequisites
 
-### 2. Privileged Identity Management (PIM)
+- **Privileged Role Administrator** role in Microsoft Entra ID (required to create role-assignable groups)
 
-* Controls who can activate privileged roles.
-* All members of role-assignable groups must be eligible, not permanently active.
+---
 
-### 3. Eligibility Rules
+## Step 1 – Define Roles
 
-* Being a group member does not mean you automatically have the role.
-* You must activate via PIM before you can perform privileged actions.
+Define roles based on job functions within your organization:
 
-### 4. Group Owners
+| Role | Description |
+|------|-------------|
+| Security Administrator | Full access privileges |
+| Security Analyst Tier 1 | Read-only, monitoring roles |
+| Security Analyst Tier 2 | Limited operational tasks |
+| Security Analyst Tier 3 | Manage configurations and settings |
 
-* Can add/remove members.
-* If the group is role-assignable, owners must also be eligible in PIM to manage membership.
-* If the owner is not eligible, they cannot make changes requiring privileged access.
+---
 
-## Section 2 – Build Steps
+## Step 2 – Create Role-Assignable Groups
 
-### Step 1 – Define Roles
+Go to **Microsoft Entra Admin Center** → **Groups** → **New Group**
 
-Before touching Entra or Defender XDR, decide:
+Create each group with these settings:
 
-* Who will be in Security Administrator (full access).
-* Who will be in Tier 1 Analyst (read-only).
-* Who will be in Tier 2 Analyst (limited operational access).
-* Who will be in Tier 3 Analyst (management level).
+| Setting | Value |
+|---------|-------|
+| Group type | Security |
+| Microsoft Entra roles can be assigned to the group | ☑️ Yes |
+| Membership type | Assigned |
 
-Write down the exact names of people for each role.
+### Group Examples
 
-### Step 2 – Create Role-Assignable Groups
+| Group Name | Purpose |
+|------------|---------|
+| **MDI-SecAdmin-Full** | Security Administrators with full access privileges |
+| **MDI-SecAnalystT1-ReadOnly** | Tier 1 Security Analysts with read-only access, suitable for monitoring roles |
+| **MDI-SecAnalystT2-Limited** | Tier 2 Security Analysts with limited access for certain operational tasks without full administrative rights |
+| **MDI-SecAnalystT3-Manage** | Tier 3 Security Analysts who can manage configurations and settings, tailored for senior analysts responsible for complex tasks |
 
-Repeat this process for each role.
+### Restrictions
 
-1. Go to Microsoft Entra Admin Center → Groups → New Group.
-2. Select:
-   * Group type: Security
-   * isAssignableToRole: Check this box (critical).
-   * Membership type: Assigned (do not choose dynamic).
-3. Name the group using your naming standard, e.g.:
-   * `MDI-SecAdmin-Full`
-   * `MDI-SecAnalystT1-ReadOnly`
-   * `MDI-SecAnalystT2-Limited`
-   * `MDI-SecAnalystT3-Manage`
-4. Add group owners (trusted personnel).
-   * If they will manage group members, they must also be eligible in PIM for this group's assigned role.
-5. Save.
+- `isAssignableToRole` is **immutable** – cannot be changed after creation
+- Existing groups **cannot** have this property set retroactively
+- Membership type must be **Assigned** – dynamic groups are not permitted
+- **No group nesting** – a group cannot be a member of another role-assignable group
 
-### Step 3 – Assign Roles to Groups in PIM
+### Group Owners
+
+You can delegate management by assigning trusted group owners. Owners can add or remove members but should be carefully selected to prevent unauthorized access or privilege escalation.
+
+---
+
+## Step 3 – Enable PIM for Groups
+
+Go to **Microsoft Entra Admin Center** → **Identity Governance** → **Privileged Identity Management** → **Groups**
 
 For each group:
 
-1. Go to Microsoft Entra Admin Center → Roles and Administrators.
-2. Select the role (e.g., Security Administrator).
-3. Assign the role-assignable group.
-4. In PIM, ensure all members are set to eligible.
-5. Configure activation settings:
-   * MFA required.
-   * Approval required (recommended).
-   * Time limit (e.g., 8 hours).
+1. Select the group → **Settings** → **Member**
+2. Configure activation settings:
+   - MFA required: **Yes**
+   - Approval required: **Yes** (recommended)
+   - Activation maximum duration: **8 hours**
+3. Add members as **Eligible** (not Active)
 
-### Step 4 – Map Groups to Defender XDR Permissions
+---
 
-Inside Defender XDR:
+## Step 4 – Assign Permissions in Defender XDR
 
-1. Go to Permissions → Unified RBAC.
-2. Create or update custom roles to match your MDI tiers.
-3. Assign the Entra role-assignable group to the matching Defender XDR role.
+Go to **Defender XDR Portal** → **Settings** → **Microsoft Defender XDR** → **Permissions** → **Roles**
 
-| Group | Security Operations | Security Posture | Authorization & Settings |
-|-------|---------------------|------------------|--------------------------|
-| `MDI-SecAdmin-Full` | All read/manage | All read/manage | All read/manage |
-| `MDI-SecAnalystT1-ReadOnly` | All read-only | All read-only | None |
-| `MDI-SecAnalystT2-Limited` | Alerts, Response, Basic live response, File collection (manage) | All read/manage | Detect tuning (manage) |
-| `MDI-SecAnalystT3-Manage` | All read/manage | All read/manage | Detect tuning (manage), Core security settings (read/manage), System settings (read/manage) |
+Create custom roles and assign each Entra group to matching permissions:
 
-### Step 5 – First-Time User Experience
+### MDI-SecAdmin-Full
 
-When a new member tries to use MDI:
+| Category | Permissions |
+|----------|-------------|
+| Security operations | All read and manage |
+| Security posture | All read and manage |
+| Authorization and settings | All read and manage |
 
-1. They log in to Defender XDR.
-2. They will not have access until they activate their role in PIM:
-   * Go to Microsoft Entra → My Roles.
-   * Find the assigned role.
-   * Click Activate.
-   * Complete MFA and approval (if configured).
-3. Once active, permissions will apply until their session expires.
+### MDI-SecAnalystT1-ReadOnly
+
+| Category | Permissions |
+|----------|-------------|
+| Security operations | All read only |
+| Security posture | All read only |
+| Authorization and settings | None |
+
+### MDI-SecAnalystT2-Limited
+
+| Category | Permissions |
+|----------|-------------|
+| Security operations | Alerts (manage), Response (manage), Basic live response (manage), File collection (manage) |
+| Security posture | All read and manage |
+| Authorization and settings | Security settings → Detect tuning (manage) |
+
+### MDI-SecAnalystT3-Manage
+
+| Category | Permissions |
+|----------|-------------|
+| Security operations | All read and manage |
+| Security posture | All read and manage |
+| Authorization and settings | Security settings → Detect tuning (manage), Core security settings (read and manage); System settings (read and manage) |
+
+---
+
+## Step 5 – Activate Unified RBAC
+
+Go to **Settings** → **Microsoft Defender XDR** → **Permissions** → **Roles**
+
+Enable Unified RBAC for Microsoft Defender for Identity workload.
+
+---
+
+## Step 6 – User Activation
+
+When users need MDI access:
+
+1. Go to **myaccess.microsoft.com** → **Groups**
+2. Find the assigned group membership
+3. Click **Activate**
+4. Complete MFA and approval (if configured)
+5. Permissions apply until session expires
+
+---
+
+## Continuous Review
+
+Regularly review and adjust roles, groups, and permissions to ensure they meet evolving security needs and organizational changes.
