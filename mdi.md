@@ -195,7 +195,7 @@ For each role below:
 
 ## Step 5 – Activate Unified RBAC
 
-Go to **Settings** → **Microsoft Defender XDR** → **Permissions** → **Roles**
+Go to **Settings** → **Microsoft Defender XDR** → **Permissions & Roles** 
 
 Enable Unified RBAC for Microsoft Defender for Identity workload.
 
