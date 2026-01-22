@@ -1,8 +1,8 @@
-# Unified RBAC for MDI – Deployment Guide
+# Unified RBAC for Defender XDR – Deployment Guide
 
 ## Overview
 
-This guide configures Microsoft Defender for Identity (MDI) access using Microsoft Entra role-assignable groups integrated with Privileged Identity Management (PIM) and Defender XDR Unified RBAC.
+This guide configures Microsoft Defender XDR access using Microsoft Entra role-assignable groups integrated with Privileged Identity Management (PIM) and Defender XDR Unified RBAC.
 
 > **Important:** Some highly privileged Entra global roles, such as Global Administrator, will continue to have admin privileges. Defender XDR respects these roles by maintaining their extensive access rights. This ensures critical administrative capabilities (such as for emergency access/break-glass accounts) remain uninterrupted.
 
@@ -43,10 +43,10 @@ Create each group with these settings:
 
 | Group Name | Purpose |
 |------------|---------|
-| **MDI-SecAdmin-Full** | Security Administrators with full access privileges |
-| **MDI-SecAnalystT1-ReadOnly** | Tier 1 Security Analysts with read-only access, suitable for monitoring roles |
-| **MDI-SecAnalystT2-Limited** | Tier 2 Security Analysts with limited access for certain operational tasks without full administrative rights |
-| **MDI-SecAnalystT3-Manage** | Tier 3 Security Analysts who can manage configurations and settings, tailored for senior analysts responsible for complex tasks |
+| **XDR-SecAdmin-Full** | Security Administrators with full access privileges |
+| **XDR-SecAnalystT1-ReadOnly** | Tier 1 Security Analysts with read-only access, suitable for monitoring roles |
+| **XDR-SecAnalystT2-Limited** | Tier 2 Security Analysts with limited access for certain operational tasks without full administrative rights |
+| **XDR-SecAnalystT3-Manage** | Tier 3 Security Analysts who can manage configurations and settings, tailored for senior analysts responsible for complex tasks |
 
 ### Restrictions
 
@@ -88,7 +88,7 @@ For each role below:
 
 ---
 
-### MDI-SecAdmin-Full
+### XDR-SecAdmin-Full
 
 #### Permissions
 
@@ -102,14 +102,13 @@ For each role below:
 
 | Field | Value |
 |-------|-------|
-| Assignment name | `MDI-SecAdmin-Full` |
-| Employees | Add group: `MDI-SecAdmin-Full` |
-| Data sources | Select: **Microsoft Defender for Identity** |
-| Identity scopes | Select: **All available user groups** |
+| Assignment name | `XDR-SecAdmin-Full` |
+| Employees | Add group: `XDR-SecAdmin-Full` |
+| Data sources | Select: **All available data sources** |
 
 ---
 
-### MDI-SecAnalystT1-ReadOnly
+### XDR-SecAnalystT1-ReadOnly
 
 #### Permissions
 
@@ -123,14 +122,13 @@ For each role below:
 
 | Field | Value |
 |-------|-------|
-| Assignment name | `MDI-SecAnalystT1-ReadOnly` |
-| Employees | Add group: `MDI-SecAnalystT1-ReadOnly` |
-| Data sources | Select: **Microsoft Defender for Identity** |
-| Identity scopes | Select: **All available user groups** |
+| Assignment name | `XDR-SecAnalystT1-ReadOnly` |
+| Employees | Add group: `XDR-SecAnalystT1-ReadOnly` |
+| Data sources | Select: **All available data sources** |
 
 ---
 
-### MDI-SecAnalystT2-Limited
+### XDR-SecAnalystT2-Limited
 
 #### Permissions
 
@@ -149,20 +147,19 @@ For each role below:
 **Authorization and settings – Custom permissions:**
 1. Select **Security settings**
 2. Select **Custom permissions**
-3. ☑️ Detect tuning (manage)
+3. ☑️ Detection tuning (manage)
 
 #### Assignment
 
 | Field | Value |
 |-------|-------|
-| Assignment name | `MDI-SecAnalystT2-Limited` |
-| Employees | Add group: `MDI-SecAnalystT2-Limited` |
-| Data sources | Select: **Microsoft Defender for Identity** |
-| Identity scopes | Select: **All available user groups** |
+| Assignment name | `XDR-SecAnalystT2-Limited` |
+| Employees | Add group: `XDR-SecAnalystT2-Limited` |
+| Data sources | Select: **All available data sources** |
 
 ---
 
-### MDI-SecAnalystT3-Manage
+### XDR-SecAnalystT3-Manage
 
 #### Permissions
 
@@ -175,7 +172,7 @@ For each role below:
 **Authorization and settings – Custom permissions:**
 
 1. **Security settings** → Select **Custom permissions**:
-   - ☑️ Detect tuning (manage)
+   - ☑️ Detection tuning (manage)
    - ☑️ Core security settings (read)
    - ☑️ Core security settings (manage)
 
@@ -186,10 +183,9 @@ For each role below:
 
 | Field | Value |
 |-------|-------|
-| Assignment name | `MDI-SecAnalystT3-Manage` |
-| Employees | Add group: `MDI-SecAnalystT3-Manage` |
-| Data sources | Select: **Microsoft Defender for Identity** |
-| Identity scopes | Select: **All available user groups** |
+| Assignment name | `XDR-SecAnalystT3-Manage` |
+| Employees | Add group: `XDR-SecAnalystT3-Manage` |
+| Data sources | Select: **All available data sources** |
 
 ---
 
@@ -197,13 +193,13 @@ For each role below:
 
 Go to **Settings** → **Microsoft Defender XDR** → **Permissions & Roles** 
 
-Enable Unified RBAC for Microsoft Defender for Identity workload.
+Enable Unified RBAC for all workloads.
 
 ---
 
 ## Step 6 – User Activation
 
-When users need MDI access:
+When users need XDR access:
 
 1. Go to **myaccess.microsoft.com** → **Groups**
 2. Find the assigned group membership
