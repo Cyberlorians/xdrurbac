@@ -1,0 +1,683 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sentinel Unified RBAC Migration Recommender</title>
+<script>
+  (() => {
+    const param = new URLSearchParams(window.location.search).get("scoutTheme");
+    const theme =
+      param || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+    document.documentElement.setAttribute("data-theme", theme);
+  })();
+</script>
+<style>
+  :root {
+    color-scheme: light;
+    --cp-bg: #f7f4ef;
+    --cp-bg-elevated: #fcfbf8;
+    --cp-surface: #ffffff;
+    --cp-surface-soft: #f5f5f5;
+    --cp-border: #dedede;
+    --cp-border-strong: #919191;
+    --cp-text: #242424;
+    --cp-text-muted: #5c5c5c;
+    --cp-text-soft: #6f6f6f;
+    --cp-accent: #b11f4b;
+    --cp-accent-hover: #9a1a41;
+    --cp-accent-soft: rgba(177, 31, 75, 0.08);
+    --cp-accent-fg: #ffffff;
+    --cp-success: #16a34a;
+    --cp-danger: #dc2626;
+    --cp-warning: #f59e0b;
+    --cp-link: #0078d4;
+    --cp-shadow: 0 18px 48px rgba(0, 0, 0, 0.12);
+    --cp-overlay: rgba(255, 255, 255, 0.8);
+    --cp-panel: rgba(255, 255, 255, 0.86);
+    --cp-panel-strong: rgba(255, 255, 255, 0.96);
+    --cp-sheen: rgba(255, 255, 255, 0.55);
+    --cp-highlight: rgba(177, 31, 75, 0.12);
+  }
+  html[data-theme="dark"] {
+    color-scheme: dark;
+    --cp-bg: #3d3b3a;
+    --cp-bg-elevated: #343231;
+    --cp-surface: #292929;
+    --cp-surface-soft: #2e2e2e;
+    --cp-border: #474747;
+    --cp-border-strong: #5f5f5f;
+    --cp-text: #dedede;
+    --cp-text-muted: #919191;
+    --cp-text-soft: #b0b0b0;
+    --cp-accent: #fd8ea1;
+    --cp-accent-hover: #fb7b91;
+    --cp-accent-soft: rgba(253, 142, 161, 0.14);
+    --cp-accent-fg: #1a1a1a;
+    --cp-success: #4ade80;
+    --cp-danger: #f87171;
+    --cp-warning: #fbbf24;
+    --cp-link: #4da6ff;
+    --cp-shadow: 0 18px 48px rgba(0, 0, 0, 0.32);
+    --cp-overlay: rgba(41, 41, 41, 0.88);
+    --cp-panel: rgba(41, 41, 41, 0.72);
+    --cp-panel-strong: rgba(41, 41, 41, 0.96);
+    --cp-sheen: rgba(255, 255, 255, 0.04);
+    --cp-highlight: rgba(253, 142, 161, 0.12);
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--cp-bg);
+    color: var(--cp-text);
+    font-family: "Segoe UI", Aptos, Calibri, -apple-system, BlinkMacSystemFont, sans-serif;
+    line-height: 1.5;
+  }
+  a { color: var(--cp-link); }
+  .shell { max-width: 1320px; margin: 0 auto; padding: 32px 24px 64px; }
+  h1 { font-size: 2.1rem; letter-spacing: -0.03em; margin: 6px 0 6px; }
+  .eyebrow { color: var(--cp-accent); font-weight: 700; letter-spacing: .08em; text-transform: uppercase; font-size: .76rem; }
+  .lede { color: var(--cp-text-muted); max-width: 800px; font-size: 1.05rem; margin: 0 0 8px; }
+  .privacy-banner {
+    display: flex; gap: 12px; align-items: flex-start;
+    background: var(--cp-highlight); border: 1px solid var(--cp-border);
+    border-radius: 12px; padding: 14px 16px; margin: 18px 0 28px;
+  }
+  .privacy-banner .icon { font-size: 1.4rem; line-height: 1; }
+  .card {
+    background: var(--cp-surface); border: 1px solid var(--cp-border);
+    border-radius: 16px; padding: 22px; margin-bottom: 22px;
+    box-shadow: 0 0 2px var(--cp-border), 0 1px 2px var(--cp-border);
+  }
+  h2 { font-size: 1.3rem; margin: 0 0 12px; letter-spacing: -0.01em; }
+  h3 { font-size: 1.02rem; margin: 18px 0 8px; }
+  .step-badge {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 26px; height: 26px; border-radius: 50%; background: var(--cp-accent);
+    color: var(--cp-accent-fg); font-weight: 800; font-size: .85rem; margin-right: 10px;
+  }
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  @media (max-width: 900px) { .two-col { grid-template-columns: 1fr; } }
+  .drop-zone {
+    border: 2px dashed var(--cp-border-strong); border-radius: 12px; padding: 22px;
+    text-align: center; color: var(--cp-text-muted); cursor: pointer; background: var(--cp-surface-soft);
+    transition: border-color .15s, color .15s;
+  }
+  .drop-zone:hover, .drop-zone.dragover { border-color: var(--cp-accent); color: var(--cp-accent); }
+  .drop-zone input { display: none; }
+  .file-status { margin-top: 10px; font-size: .88rem; color: var(--cp-text-muted); }
+  .file-status.ok { color: var(--cp-success); }
+  textarea {
+    width: 100%; min-height: 90px; margin-top: 10px; border-radius: 10px;
+    border: 1px solid var(--cp-border); background: var(--cp-bg-elevated); color: var(--cp-text);
+    font-family: Consolas, "Courier New", monospace; font-size: .82rem; padding: 10px;
+  }
+  select, button, input[type=text] {
+    font: inherit; border-radius: .625rem; border: 1px solid var(--cp-border);
+    background: var(--cp-surface); color: var(--cp-text); padding: 8px 10px;
+  }
+  .mapping-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px 16px; margin-top: 10px; }
+  .mapping-grid label { display: block; font-size: .78rem; color: var(--cp-text-muted); margin-bottom: 4px; }
+  .mapping-grid select { width: 100%; }
+  .primary-btn {
+    background: var(--cp-accent); color: var(--cp-accent-fg); border: none;
+    font-weight: 700; padding: 12px 20px; cursor: pointer; font-size: 1rem;
+  }
+  .primary-btn:hover { background: var(--cp-accent-hover); }
+  .primary-btn:disabled { opacity: .5; cursor: not-allowed; }
+  .ghost-btn { background: transparent; cursor: pointer; }
+  .ghost-btn:hover { border-color: var(--cp-accent); color: var(--cp-accent); }
+  .summary-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; margin-bottom: 18px; }
+  @media (max-width: 1100px) { .summary-grid { grid-template-columns: repeat(2, 1fr); } }
+  .summary-tile { border-radius: 12px; padding: 14px 16px; border: 1px solid var(--cp-border); }
+  .summary-tile .n { font-size: 1.8rem; font-weight: 800; display: block; }
+  .summary-tile .l { font-size: .78rem; color: var(--cp-text-muted); text-transform: uppercase; letter-spacing: .03em; }
+  .tile-safe { border-left: 4px solid var(--cp-success); }
+  .tile-gap { border-left: 4px solid var(--cp-warning); }
+  .tile-keep { border-left: 4px solid var(--cp-link); }
+  .tile-blocked { border-left: 4px solid var(--cp-danger); }
+  .tile-review { border-left: 4px solid var(--cp-border-strong); }
+  .filters { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
+  .filters button {
+    border-radius: 999px; padding: 6px 14px; font-size: .82rem; cursor: pointer; background: var(--cp-surface-soft);
+  }
+  .filters button.active { background: var(--cp-accent); color: var(--cp-accent-fg); border-color: var(--cp-accent); }
+  table { width: 100%; border-collapse: collapse; font-size: .86rem; }
+  th, td { padding: 10px; border-bottom: 1px solid var(--cp-border); text-align: left; vertical-align: top; }
+  th { color: var(--cp-text-muted); font-size: .72rem; text-transform: uppercase; letter-spacing: .03em; cursor: pointer; user-select: none; }
+  tr:hover td { background: var(--cp-surface-soft); }
+  .badge { display: inline-block; padding: 3px 9px; border-radius: 999px; font-size: .74rem; font-weight: 700; white-space: nowrap; }
+  .badge-safe { background: rgba(22,163,74,.15); color: var(--cp-success); }
+  .badge-gap { background: rgba(245,158,11,.18); color: var(--cp-warning); }
+  .badge-keep { background: rgba(0,120,212,.15); color: var(--cp-link); }
+  .badge-blocked { background: rgba(220,38,38,.15); color: var(--cp-danger); }
+  .badge-review { background: var(--cp-surface-soft); color: var(--cp-text-muted); }
+  .muted { color: var(--cp-text-muted); }
+  code { font-family: Consolas, monospace; background: var(--cp-surface-soft); padding: 1px 5px; border-radius: 4px; font-size: .85em; }
+  .actions-row { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 14px; }
+  #resultsSection { display: none; }
+  .empty-state { text-align: center; color: var(--cp-text-muted); padding: 40px 20px; }
+  .sample-link { font-size: .85rem; }
+  footer { color: var(--cp-text-muted); font-size: .82rem; margin-top: 30px; }
+</style>
+</head>
+<body>
+<div class="shell">
+  <div class="eyebrow">Local, in-browser tool &middot; no data leaves this page</div>
+  <h1>Sentinel &rarr; Unified RBAC Migration Recommender</h1>
+  <p class="lede">Export your current Azure role assignments and your Unified RBAC roles, drop them in below, and get a specific, row-by-row recommendation: what's safe to remove, what still needs a Unified RBAC role built, and what must stay in Azure.</p>
+
+  <div class="privacy-banner">
+    <div class="icon">🔒</div>
+    <div>
+      <strong>Nothing is uploaded anywhere.</strong> This page has no server and makes no network calls — all parsing and analysis happens locally in your browser tab using JavaScript. You can even disconnect from the network and it will keep working. Safe to use with real tenant exports, including in GCC High.
+    </div>
+  </div>
+
+  <div class="card">
+    <h2><span class="step-badge">1</span>Bring in your two exports</h2>
+    <div class="two-col">
+      <div>
+        <h3>Azure role assignments (CSV)</h3>
+        <p class="muted" style="font-size:.85rem; margin-top:0;">From the included <code>Export-SentinelAccessBaseline.ps1</code> script (<code>azure-role-assignments.csv</code>), or any CSV from <code>Get-AzRoleAssignment</code>.</p>
+        <div class="drop-zone" id="dropAzure">
+          <div>📄 Drop CSV here, or click to choose a file</div>
+          <input type="file" id="fileAzure" accept=".csv,text/csv">
+        </div>
+        <div class="file-status" id="statusAzure">No file loaded yet.</div>
+        <details style="margin-top:10px;"><summary class="muted" style="cursor:pointer; font-size:.85rem;">Or paste CSV text instead</summary>
+          <textarea id="pasteAzure" placeholder="Paste azure-role-assignments.csv contents here..."></textarea>
+        </details>
+      </div>
+      <div>
+        <h3>Unified RBAC roles export (CSV)</h3>
+        <p class="muted" style="font-size:.85rem; margin-top:0;">From Defender: <strong>System &gt; Permissions &gt; Roles &gt; Export</strong>.</p>
+        <div class="drop-zone" id="dropUrbac">
+          <div>📄 Drop CSV here, or click to choose a file</div>
+          <input type="file" id="fileUrbac" accept=".csv,text/csv">
+        </div>
+        <div class="file-status" id="statusUrbac">No file loaded yet.</div>
+        <details style="margin-top:10px;"><summary class="muted" style="cursor:pointer; font-size:.85rem;">Or paste CSV text instead</summary>
+          <textarea id="pasteUrbac" placeholder="Paste Unified RBAC roles export CSV contents here..."></textarea>
+        </details>
+      </div>
+    </div>
+    <p class="sample-link"><a href="#" id="loadSample">Don't have exports handy yet? Load fictional demo data to see how this works &rarr;</a> <span class="muted">(100% made-up names/IDs — not from any real tenant)</span></p>
+  </div>
+
+  <div class="card" id="mappingCard" style="display:none;">
+    <h2><span class="step-badge">2</span>Confirm the columns (auto-detected, override if needed)</h2>
+    <h3>Azure CSV columns</h3>
+    <div class="mapping-grid" id="mapAzure"></div>
+    <h3>Unified RBAC CSV columns</h3>
+    <div class="mapping-grid" id="mapUrbac"></div>
+    <div style="margin-top:14px;">
+      <label class="muted" style="font-size:.8rem;">How are multiple assigned users/groups separated within one URBAC cell?</label><br>
+      <select id="urbacDelimiter" style="margin-top:6px;">
+        <option value="auto">Auto-detect</option>
+        <option value=";">Semicolon ( ; )</option>
+        <option value="\n">New line</option>
+        <option value=",">Comma ( , )</option>
+      </select>
+    </div>
+    <div class="actions-row">
+      <button class="primary-btn" id="analyzeBtn">Analyze &amp; generate recommendations</button>
+    </div>
+  </div>
+
+  <div class="card" id="resultsSection">
+    <h2><span class="step-badge">3</span>Recommendations</h2>
+    <div id="sampleDataWarning" style="display:none; margin-bottom:14px; padding:10px 14px; border-radius:10px; background:var(--cp-highlight); border:1px solid var(--cp-border); font-size:.88rem;">
+      ⚠️ <strong>These results are from fictional demo data</strong> (Alice Tier1, Bob Responder, etc. — not a real tenant). Load your real Azure and Unified RBAC exports above to analyze your actual environment.
+    </div>
+    <div class="summary-grid" id="summaryGrid"></div>
+    <div class="filters" id="filterBar"></div>
+    <div style="overflow-x:auto;">
+      <table id="resultsTable">
+        <thead>
+          <tr>
+            <th data-key="principal">Principal</th>
+            <th data-key="objectType">Type</th>
+            <th data-key="azureRole">Azure role (assignment)</th>
+            <th data-key="scope">Scope</th>
+            <th data-key="recommendation">Recommendation</th>
+            <th data-key="reason">Why</th>
+            <th data-key="urbacMatch">Matched Unified RBAC assignment</th>
+          </tr>
+        </thead>
+        <tbody id="resultsBody"></tbody>
+      </table>
+    </div>
+    <div class="actions-row">
+      <button class="ghost-btn" id="exportCsvBtn">⬇ Export recommendations as CSV</button>
+      <button class="ghost-btn" id="printBtn" onclick="window.print()">🖨 Print / save as PDF</button>
+    </div>
+  </div>
+
+  <footer>
+    Classification logic is based on Microsoft's documented Sentinel role mapping and the roles Microsoft states are unsupported in or excluded from Unified RBAC. Always spot-check recommendations before removing production access — this tool proposes, it doesn't execute.
+  </footer>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  // ---------- Known role knowledge base ----------
+  const AZURE_CORE_SENTINEL_ROLES = {
+    "microsoft sentinel reader": "Reader",
+    "microsoft sentinel responder": "Responder",
+    "microsoft sentinel contributor": "Contributor and Responder"
+  };
+  const BUNDLE_RANK = { "Reader": 1, "Responder": 2, "Contributor and Responder": 3 };
+
+  const AZURE_STAYS_ROLES = [
+    "microsoft sentinel playbook operator",
+    "microsoft sentinel automation contributor",
+    "workbook contributor",
+    "logic app contributor",
+    "logic apps standard developer",
+    "logic apps standard contributor",
+    "logic apps standard operator",
+    "monitoring contributor",
+    "log analytics contributor",
+    "template spec contributor"
+  ];
+
+  const BLOCKED_OBJECT_TYPES = ["serviceprincipal", "service principal", "application", "app", "msi", "managed identity", "managedidentity"];
+
+  function norm(s) { return (s || "").toString().trim().toLowerCase(); }
+
+  // ---------- CSV parsing (RFC4180-ish, handles quoted commas/newlines) ----------
+  function parseCSV(text) {
+    const rows = [];
+    let row = [], field = "", i = 0, inQuotes = false;
+    text = text.replace(/^\uFEFF/, "");
+    while (i < text.length) {
+      const c = text[i];
+      if (inQuotes) {
+        if (c === '"') {
+          if (text[i + 1] === '"') { field += '"'; i += 2; continue; }
+          inQuotes = false; i++; continue;
+        }
+        field += c; i++; continue;
+      } else {
+        if (c === '"') { inQuotes = true; i++; continue; }
+        if (c === ',') { row.push(field); field = ""; i++; continue; }
+        if (c === '\r') { i++; continue; }
+        if (c === '\n') { row.push(field); rows.push(row); row = []; field = ""; i++; continue; }
+        field += c; i++; continue;
+      }
+    }
+    if (field.length || row.length) { row.push(field); rows.push(row); }
+    const filtered = rows.filter(r => r.length > 1 || (r.length === 1 && r[0] !== ""));
+    if (!filtered.length) return { headers: [], rows: [] };
+    const headers = filtered[0].map(h => h.trim());
+    const dataRows = filtered.slice(1).map(r => {
+      const obj = {};
+      headers.forEach((h, idx) => { obj[h] = (r[idx] || "").trim(); });
+      return obj;
+    });
+    return { headers, rows: dataRows };
+  }
+
+  function guessColumn(headers, patterns) {
+    for (const pat of patterns) {
+      const found = headers.find(h => pat.test(h));
+      if (found) return found;
+    }
+    return headers[0] || "";
+  }
+
+  // ---------- State ----------
+  let azureParsed = null; // {headers, rows}
+  let urbacParsed = null;
+  let isSampleData = false;
+
+  // ---------- File / paste handling ----------
+  function setupDropZone(zoneId, inputId, statusId, onLoaded) {
+    const zone = document.getElementById(zoneId);
+    const input = document.getElementById(inputId);
+    const status = document.getElementById(statusId);
+    zone.addEventListener("click", () => input.click());
+    zone.addEventListener("dragover", e => { e.preventDefault(); zone.classList.add("dragover"); });
+    zone.addEventListener("dragleave", () => zone.classList.remove("dragover"));
+    zone.addEventListener("drop", e => {
+      e.preventDefault(); zone.classList.remove("dragover");
+      if (e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]);
+    });
+    input.addEventListener("change", () => { if (input.files.length) { isSampleData = false; handleFile(input.files[0]); } });
+    function handleFile(file) {
+      const reader = new FileReader();
+      reader.onload = () => {
+        try {
+          const parsed = parseCSV(reader.result);
+          if (!parsed.headers.length) throw new Error("No headers detected");
+          status.textContent = `✓ Loaded "${file.name}" — ${parsed.rows.length} rows, ${parsed.headers.length} columns.`;
+          status.classList.add("ok");
+          onLoaded(parsed);
+        } catch (err) {
+          status.textContent = "Could not parse this file as CSV: " + err.message;
+          status.classList.remove("ok");
+        }
+      };
+      reader.readAsText(file);
+    }
+  }
+
+  function tryEnableMapping() {
+    if (azureParsed && urbacParsed) buildMappingUI();
+  }
+
+  setupDropZone("dropAzure", "fileAzure", "statusAzure", parsed => { azureParsed = parsed; tryEnableMapping(); });
+  setupDropZone("dropUrbac", "fileUrbac", "statusUrbac", parsed => { urbacParsed = parsed; tryEnableMapping(); });
+
+  document.getElementById("pasteAzure").addEventListener("change", e => {
+    if (!e.target.value.trim()) return;
+    isSampleData = false;
+    azureParsed = parseCSV(e.target.value);
+    document.getElementById("statusAzure").textContent = `✓ Parsed pasted text — ${azureParsed.rows.length} rows.`;
+    document.getElementById("statusAzure").classList.add("ok");
+    tryEnableMapping();
+  });
+  document.getElementById("pasteUrbac").addEventListener("change", e => {
+    if (!e.target.value.trim()) return;
+    isSampleData = false;
+    urbacParsed = parseCSV(e.target.value);
+    document.getElementById("statusUrbac").textContent = `✓ Parsed pasted text — ${urbacParsed.rows.length} rows.`;
+    document.getElementById("statusUrbac").classList.add("ok");
+    tryEnableMapping();
+  });
+
+  // ---------- Sample data ----------
+  document.getElementById("loadSample").addEventListener("click", e => {
+    e.preventDefault();
+    const azureSample =
+`RoleAssignmentId,RoleDefinitionName,Scope,DisplayName,ObjectId,ObjectType
+/ra/1,Microsoft Sentinel Reader,/subscriptions/x/resourceGroups/rg-sentinel,Alice Tier1,00000000-0000-0000-0000-000000000001,User
+/ra/2,Microsoft Sentinel Responder,/subscriptions/x/resourceGroups/rg-sentinel,Bob Responder,00000000-0000-0000-0000-000000000002,User
+/ra/3,Microsoft Sentinel Contributor,/subscriptions/x/resourceGroups/rg-sentinel,Carol Engineer,00000000-0000-0000-0000-000000000003,User
+/ra/4,Microsoft Sentinel Playbook Operator,/subscriptions/x/resourceGroups/rg-sentinel,Carol Engineer,00000000-0000-0000-0000-000000000003,User
+/ra/5,Microsoft Sentinel Reader,/subscriptions/x/resourceGroups/rg-sentinel,svc-soar-automation,00000000-0000-0000-0000-000000000004,ServicePrincipal
+/ra/6,Microsoft Sentinel Responder,/subscriptions/x/resourceGroups/rg-sentinel,Dave NoUrbacYet,00000000-0000-0000-0000-000000000005,User
+/ra/7,Owner,/subscriptions/x,Erin Admin,00000000-0000-0000-0000-000000000006,User`;
+    const urbacSample =
+`Role name,Role description,Permissions,Assignment name,Assigned data sources,Assigned users or user groups
+Tier1-Reader,Read only SOC role,Security data basics (read),Tier1 Assignment,Microsoft Sentinel,Alice Tier1
+Responder-Role,Responder role,"Security data basics (read); Alerts (manage); Response (manage)",Responder Assignment,Microsoft Sentinel,Bob Responder
+Engineer-Role,Contributor and responder,"Security data basics (read); Alerts (manage); Response (manage); Detection tuning (manage)",Engineer Assignment,Microsoft Sentinel,Carol Engineer`;
+    azureParsed = parseCSV(azureSample);
+    urbacParsed = parseCSV(urbacSample);
+    isSampleData = true;
+    document.getElementById("statusAzure").textContent = "✓ Fictional demo data loaded (7 rows) — not a real tenant.";
+    document.getElementById("statusAzure").classList.add("ok");
+    document.getElementById("statusUrbac").textContent = "✓ Fictional demo data loaded (3 rows) — not a real tenant.";
+    document.getElementById("statusUrbac").classList.add("ok");
+    tryEnableMapping();
+  });
+
+  // ---------- Column mapping UI ----------
+  const azureFields = [
+    { key: "principal", label: "Principal / display name", patterns: [/display\s*name/i, /principal\s*name/i, /assigned\s*to/i, /user/i] },
+    { key: "objectType", label: "Object type", patterns: [/object\s*type/i, /principal\s*type/i] },
+    { key: "roleName", label: "Role definition name", patterns: [/role\s*definition\s*name/i, /role\s*name/i] },
+    { key: "scope", label: "Scope", patterns: [/^scope$/i, /scope/i] }
+  ];
+  const urbacFields = [
+    { key: "roleName", label: "Role name", patterns: [/^role\s*name$/i, /role\s*name/i] },
+    { key: "permissions", label: "Permissions", patterns: [/permission/i] },
+    { key: "assignmentName", label: "Assignment name", patterns: [/assignment\s*name/i] },
+    { key: "dataSources", label: "Assigned data sources", patterns: [/data\s*source/i] },
+    { key: "principals", label: "Assigned users/groups", patterns: [/assigned\s*users?/i, /users?\s*or\s*(user\s*)?groups?/i, /employees/i, /members/i] }
+  ];
+
+  function buildMappingUI() {
+    document.getElementById("mappingCard").style.display = "block";
+    renderMappingGroup("mapAzure", azureFields, azureParsed.headers);
+    renderMappingGroup("mapUrbac", urbacFields, urbacParsed.headers);
+    document.getElementById("mappingCard").scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
+  function renderMappingGroup(containerId, fields, headers) {
+    const container = document.getElementById(containerId);
+    container.innerHTML = "";
+    fields.forEach(f => {
+      const guess = guessColumn(headers, f.patterns);
+      const wrap = document.createElement("div");
+      const label = document.createElement("label");
+      label.textContent = f.label;
+      const select = document.createElement("select");
+      select.id = containerId + "_" + f.key;
+      headers.forEach(h => {
+        const opt = document.createElement("option");
+        opt.value = h; opt.textContent = h;
+        if (h === guess) opt.selected = true;
+        select.appendChild(opt);
+      });
+      wrap.appendChild(label);
+      wrap.appendChild(select);
+      container.appendChild(wrap);
+    });
+  }
+
+  function getMapping(containerId, fields) {
+    const map = {};
+    fields.forEach(f => {
+      const el = document.getElementById(containerId + "_" + f.key);
+      map[f.key] = el ? el.value : "";
+    });
+    return map;
+  }
+
+  // ---------- Analysis ----------
+  let allResults = [];
+  let activeFilter = "all";
+  let sortKey = null, sortAsc = true;
+
+  document.getElementById("analyzeBtn").addEventListener("click", runAnalysis);
+
+  function splitPrincipals(raw, delimMode) {
+    if (!raw) return [];
+    let delim = delimMode;
+    if (delimMode === "auto") {
+      if (raw.includes(";")) delim = ";";
+      else if (raw.includes("\n")) delim = "\n";
+      else delim = ",";
+    }
+    return raw.split(delim).map(s => s.trim()).filter(Boolean);
+  }
+
+  function classifyUrbacBundle(permText) {
+    const p = norm(permText);
+    if (p.includes("detection tuning")) return "Contributor and Responder";
+    if (p.includes("alerts") && p.includes("response")) return "Responder";
+    if (p.includes("security data basics")) return "Reader";
+    return "Custom/Unclear";
+  }
+
+  function runAnalysis() {
+    const aMap = getMapping("mapAzure", azureFields);
+    const uMap = getMapping("mapUrbac", urbacFields);
+    const delimMode = document.getElementById("urbacDelimiter").value;
+
+    // Build principal -> [{roleName(bundle), rawPermissions, assignmentName, dataSources}] index from URBAC export
+    const urbacIndex = new Map();
+    urbacParsed.rows.forEach(r => {
+      const bundle = classifyUrbacBundle(r[uMap.permissions]);
+      const principalsRaw = r[uMap.principals] || "";
+      const names = splitPrincipals(principalsRaw, delimMode);
+      names.forEach(name => {
+        const key = norm(name);
+        if (!urbacIndex.has(key)) urbacIndex.set(key, []);
+        urbacIndex.get(key).push({
+          roleName: r[uMap.roleName],
+          bundle,
+          assignmentName: r[uMap.assignmentName],
+          dataSources: r[uMap.dataSources]
+        });
+      });
+    });
+
+    allResults = azureParsed.rows.map(r => {
+      const principal = r[aMap.principal] || "(unknown)";
+      const objectType = r[aMap.objectType] || "";
+      const roleName = r[aMap.roleName] || "";
+      const scope = r[aMap.scope] || "";
+      const roleKey = norm(roleName);
+      const isBlockedType = BLOCKED_OBJECT_TYPES.includes(norm(objectType));
+      const urbacMatches = urbacIndex.get(norm(principal)) || [];
+      const urbacSummary = urbacMatches.length
+        ? urbacMatches.map(m => `${m.roleName} (${m.bundle})`).join("; ")
+        : "— none found —";
+
+      let recommendation, reason, bucket;
+
+      if (AZURE_STAYS_ROLES.includes(roleKey)) {
+        bucket = "keep";
+        recommendation = "🔧 KEEP — Azure-only capability";
+        reason = `"${roleName}" is not supported in Unified RBAC and must stay in Azure regardless of URBAC status.`;
+      } else if (isBlockedType && AZURE_CORE_SENTINEL_ROLES[roleKey]) {
+        bucket = "blocked";
+        recommendation = "🚫 BLOCKED — do not migrate";
+        reason = `Object type "${objectType}" (service principal) cannot be assigned Sentinel permissions in Unified RBAC. Keep on Azure RBAC.`;
+      } else if (AZURE_CORE_SENTINEL_ROLES[roleKey]) {
+        const requiredBundle = AZURE_CORE_SENTINEL_ROLES[roleKey];
+        const requiredRank = BUNDLE_RANK[requiredBundle];
+        const bestMatch = urbacMatches.reduce((best, m) => {
+          const r2 = BUNDLE_RANK[m.bundle] || 0;
+          return r2 > (best ? (BUNDLE_RANK[best.bundle] || 0) : -1) ? m : best;
+        }, null);
+        const bestRank = bestMatch ? (BUNDLE_RANK[bestMatch.bundle] || 0) : 0;
+
+        if (bestRank >= requiredRank) {
+          bucket = "safe";
+          recommendation = "✅ SAFE TO REMOVE";
+          reason = `Covered by Unified RBAC role "${bestMatch.roleName}" (${bestMatch.bundle}), which meets or exceeds "${requiredBundle}".`;
+        } else if (urbacMatches.length) {
+          bucket = "gap";
+          recommendation = "⚠️ GAP — upgrade URBAC role first";
+          reason = `Has a Unified RBAC role ("${bestMatch.roleName}", ${bestMatch.bundle}) but it's narrower than the Azure role ("${requiredBundle}" needed). Add permissions before removing Azure access.`;
+        } else {
+          bucket = "gap";
+          recommendation = "⚠️ GAP — build URBAC role first";
+          reason = `No matching Unified RBAC assignment found for this person. Build and assign a "${requiredBundle}"-equivalent custom role before removing this Azure assignment.`;
+        }
+      } else {
+        bucket = "review";
+        recommendation = "❓ REVIEW manually";
+        reason = `"${roleName}" isn't a core Sentinel analyst role or a known Azure-only role — could be subscription/tenant admin access unrelated to this migration. Confirm intent before changing it.`;
+      }
+
+      return { principal, objectType, azureRole: roleName, scope, recommendation, reason, urbacMatch: urbacSummary, bucket };
+    });
+
+    document.getElementById("sampleDataWarning").style.display = isSampleData ? "flex" : "none";
+    renderSummary();
+    renderFilters();
+    renderTable();
+    document.getElementById("resultsSection").style.display = "block";
+    document.getElementById("resultsSection").scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
+  function renderSummary() {
+    const counts = { safe: 0, gap: 0, keep: 0, blocked: 0, review: 0 };
+    allResults.forEach(r => counts[r.bucket]++);
+    const tiles = [
+      { key: "safe", cls: "tile-safe", label: "Safe to remove", n: counts.safe },
+      { key: "gap", cls: "tile-gap", label: "Gaps — build/upgrade URBAC", n: counts.gap },
+      { key: "keep", cls: "tile-keep", label: "Keep — Azure-only", n: counts.keep },
+      { key: "blocked", cls: "tile-blocked", label: "Blocked — unsupported", n: counts.blocked },
+      { key: "review", cls: "tile-review", label: "Needs manual review", n: counts.review }
+    ];
+    const grid = document.getElementById("summaryGrid");
+    grid.innerHTML = tiles.map(t => `
+      <div class="summary-tile ${t.cls}">
+        <span class="n">${t.n}</span>
+        <span class="l">${t.label}</span>
+      </div>`).join("");
+  }
+
+  function renderFilters() {
+    const bar = document.getElementById("filterBar");
+    const options = [
+      { key: "all", label: "All" },
+      { key: "safe", label: "✅ Safe to remove" },
+      { key: "gap", label: "⚠️ Gaps" },
+      { key: "keep", label: "🔧 Keep" },
+      { key: "blocked", label: "🚫 Blocked" },
+      { key: "review", label: "❓ Review" }
+    ];
+    bar.innerHTML = "";
+    options.forEach(o => {
+      const btn = document.createElement("button");
+      btn.textContent = o.label;
+      btn.className = activeFilter === o.key ? "active" : "";
+      btn.addEventListener("click", () => { activeFilter = o.key; renderFilters(); renderTable(); });
+      bar.appendChild(btn);
+    });
+  }
+
+  function badgeClassFor(bucket) {
+    return { safe: "badge-safe", gap: "badge-gap", keep: "badge-keep", blocked: "badge-blocked", review: "badge-review" }[bucket] || "badge-review";
+  }
+
+  function renderTable() {
+    const body = document.getElementById("resultsBody");
+    let rows = activeFilter === "all" ? allResults.slice() : allResults.filter(r => r.bucket === activeFilter);
+    if (sortKey) {
+      rows.sort((a, b) => {
+        const av = (a[sortKey] || "").toString().toLowerCase();
+        const bv = (b[sortKey] || "").toString().toLowerCase();
+        if (av < bv) return sortAsc ? -1 : 1;
+        if (av > bv) return sortAsc ? 1 : -1;
+        return 0;
+      });
+    }
+    if (!rows.length) {
+      body.innerHTML = `<tr><td colspan="7" class="empty-state">No rows match this filter.</td></tr>`;
+      return;
+    }
+    body.innerHTML = rows.map(r => `
+      <tr>
+        <td>${escapeHtml(r.principal)}</td>
+        <td>${escapeHtml(r.objectType)}</td>
+        <td><code>${escapeHtml(r.azureRole)}</code></td>
+        <td class="muted">${escapeHtml(r.scope)}</td>
+        <td><span class="badge ${badgeClassFor(r.bucket)}">${escapeHtml(r.recommendation)}</span></td>
+        <td class="muted">${escapeHtml(r.reason)}</td>
+        <td class="muted">${escapeHtml(r.urbacMatch)}</td>
+      </tr>`).join("");
+  }
+
+  document.querySelectorAll("#resultsTable th").forEach(th => {
+    th.addEventListener("click", () => {
+      const key = th.getAttribute("data-key");
+      if (sortKey === key) sortAsc = !sortAsc; else { sortKey = key; sortAsc = true; }
+      renderTable();
+    });
+  });
+
+  function escapeHtml(s) {
+    return (s || "").toString().replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  }
+
+  // ---------- Export ----------
+  document.getElementById("exportCsvBtn").addEventListener("click", () => {
+    const headers = ["Principal", "ObjectType", "AzureRole", "Scope", "Recommendation", "Reason", "MatchedUrbacAssignment"];
+    const lines = [headers.join(",")];
+    allResults.forEach(r => {
+      const row = [r.principal, r.objectType, r.azureRole, r.scope, r.recommendation, r.reason, r.urbacMatch]
+        .map(v => `"${(v || "").toString().replace(/"/g, '""')}"`);
+      lines.push(row.join(","));
+    });
+    const blob = new Blob([lines.join("\n")], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url; a.download = "sentinel-urbac-migration-recommendations.csv";
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  });
+})();
+</script>
+</body>
+</html>
