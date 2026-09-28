@@ -329,7 +329,7 @@
               <p>You'll need Entra <strong>Security Administrator</strong>, plus either subscription <strong>Owner</strong>, or <strong>User Access Administrator</strong> + workspace <strong>Sentinel Contributor</strong>. See <a href="#activation">"What turning it on really does"</a> above — and remember, this step is <a href="#rollback">fully reversible</a> if needed.</p>
             </div></details>
             <details open><summary>Step 4 · Quick sanity check (10 minutes, optional but cheap insurance)</summary><div><p>You don't need a big formal test cycle for this. Since roles are hand-built from checkboxes (no templates), it's easy to miss one — so just have 2-3 real people from the pilot team confirm their access looks normal. If something's off, fix the role — nothing is destructive yet since their old Azure access is still there too. See the <a href="#testing">optional deeper checklist</a> if you want more rigor for a sensitive team.</p></div></details>
-            <details open><summary>Step 5 · Remove their old Azure group membership</summary><div><p>This is the actual "shrink access" step — everything before this was additive. Take those people out of the old <code>Microsoft Sentinel Reader/Responder/Contributor</code> Azure groups (keep any Azure roles they still need per Step 2 — playbooks, workbooks, deployments, etc.). Do it for the whole pilot team at once if you're confident, or in a couple of batches if you want extra caution. If anything breaks, you can always <a href="#rollback">turn Unified RBAC back off</a> while you sort it out.</p><p class="muted">Optional safety net: <code>.\scripts\Export-SentinelAccessBaseline.ps1</code> (included in this project) takes a read-only snapshot of current Azure role assignments before you remove anything, so you have an exact list to restore from if needed.</p><p><strong>💡 Don't want to eyeball this manually?</strong> Export your Azure role assignments (using the script above) and your Unified RBAC roles (Defender &gt; System &gt; Permissions &gt; Roles &gt; Export), then drop both into the <a href="rbac-migration-recommender.html" target="_blank">Migration Recommender tool</a> — it gives you a row-by-row "safe to remove / needs a URBAC role first / must stay in Azure" recommendation automatically, entirely in your browser.</p></div></details>
+            <details open><summary>Step 5 · Remove their old Azure group membership</summary><div><p>This is the actual "shrink access" step — everything before this was additive. Take those people out of the old <code>Microsoft Sentinel Reader/Responder/Contributor</code> Azure groups (keep any Azure roles they still need per Step 2 — playbooks, workbooks, deployments, etc.). Do it for the whole pilot team at once if you're confident, or in a couple of batches if you want extra caution. If anything breaks, you can always <a href="#rollback">turn Unified RBAC back off</a> while you sort it out.</p><p class="muted">Optional safety net: before removing anything, export a snapshot of current Azure role assignments (<code>Get-AzRoleAssignment</code>) so you have an exact list to restore from if needed.</p></div></details>
             <details><summary>Step 6 · Repeat for the next team</summary><div><p>Once the pilot team is clean and working, do the same for the next team. One team at a time keeps mistakes small and easy to fix.</p></div></details>
           </div>
         </section>
@@ -342,7 +342,6 @@
             <div class="stat"><strong>🚫 Can't-do</strong>No role = no access; a Reader can't edit anything; nobody can grant themselves more access.</div>
             <div class="stat"><strong>🤖 Non-human accounts</strong>Service accounts, automation, and partner/MSSP access still work — these should never have moved to Unified RBAC in the first place.</div>
           </div>
-          <p><a href="docs/pilot-test-plan.md">Open the full detailed test list (45 test cases)</a> — this is the audit-grade version, not the default path.</p>
         </section>
 
         <section id="rollback" class="card">
@@ -384,7 +383,6 @@
             <li><a href="https://learn.microsoft.com/en-us/azure/sentinel/move-to-defender" target="_blank" rel="noreferrer">Plan the Defender portal transition</a></li>
             <li><a href="https://learn.microsoft.com/azure/sentinel/overview#microsoft-sentinel-in-the-azure-portal-retirement-timeline" target="_blank" rel="noreferrer">Current portal retirement timeline</a></li>
           </ul>
-          <p><a href="docs/source-review.md">Open the complete source review</a> · <a href="README.md">Open the Markdown guide</a></p>
         </section>
       </main>
     </div>
